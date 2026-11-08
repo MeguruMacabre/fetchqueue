@@ -1,0 +1,84 @@
+
+# Binaries
+/fetchqueue
+/fetchqueue.exe
+/fetchqueue.app/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build artifacts
+/bin/
+/build/
+/dist/
+/tmp/
+/temp/
+*.prof
+*.pprof
+coverage/
+coverage.txt
+coverage.html
+coverage.out
+cpu.prof
+mem.prof
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Downloaded files
+/downloads/
+
+# Logs
+*.log
+/logs/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+.Trash-*
+.directory
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+*.rej
