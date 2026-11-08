@@ -29,7 +29,12 @@ type Download struct {
 	Total      int64
 }
 
-func DownloadFile(ctx context.Context, filePath string, url string) (Download, error) {
+func DownloadFile(
+	ctx context.Context,
+	filePath string,
+	url string,
+	onProgress func(downloaded, total int64),
+) (Download, error) {
 	result := Download{
 		URL:      url,
 		Filename: filepath.Base(filePath),
@@ -120,7 +125,6 @@ func DownloadFile(ctx context.Context, filePath string, url string) (Download, e
 	}
 
 	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-
 	if downloaded > 0 {
 		flags = os.O_WRONLY | os.O_APPEND
 	}
@@ -130,7 +134,14 @@ func DownloadFile(ctx context.Context, filePath string, url string) (Download, e
 		return result, fmt.Errorf("could not open file: %w", err)
 	}
 
-	written, copyErr := io.Copy(out, resp.Body)
+	writer := &ProgressWriter{
+		Writer:     out,
+		Offset:     downloaded,
+		Total:      result.Total,
+		OnProgress: onProgress,
+	}
+
+	written, copyErr := io.Copy(writer, resp.Body)
 	result.Downloaded = downloaded + written
 
 	closeErr := out.Close()
@@ -163,7 +174,6 @@ func DownloadFile(ctx context.Context, filePath string, url string) (Download, e
 	}
 
 	result.Status = COMPLETED
-
 	return result, nil
 }
 

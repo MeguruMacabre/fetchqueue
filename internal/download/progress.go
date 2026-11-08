@@ -10,28 +10,36 @@ type ProgressWriter struct {
 	Written    int64
 	Total      int64
 	LastUpdate time.Time
+	Offset     int64
+	OnProgress func(downloaded, total int64)
 }
 
 func (p *ProgressWriter) Write(data []byte) (n int, err error) {
 	n, err = p.Writer.Write(data)
 	p.Written += int64(n)
 
-	if time.Since(p.LastUpdate) >= 250*time.Millisecond {
-		if p.Total > 0 {
+	if n > 0 && time.Since(p.LastUpdate) >= 250*time.Millisecond {
+		/*if p.Total > 0 {
 			//fmt.Printf("\rProgress: %.2f%%", p.Progress())
 		} else {
 			//fmt.Printf("\rDownloaded: %d bytes", p.Written)
 		}
+		*/
 		p.LastUpdate = time.Now()
+
+		if p.OnProgress != nil {
+			p.OnProgress(p.Offset+p.Written, p.Total)
+		}
 	}
+
 	return n, err
 }
 
-func (p *ProgressWriter) Progress() float64 {
+/*func (p *ProgressWriter) Progress() float64 {
 	if p.Total <= 0 {
 		return 0
 	}
-	return float64(p.Written) / float64(p.Total) * 100
+	return float64(p.Offset+p.Written) / float64(p.Total) * 100
 }
 
 func (p *ProgressWriter) PrintProgress() {
@@ -41,3 +49,4 @@ func (p *ProgressWriter) PrintProgress() {
 		//fmt.Printf("\rDownloaded: %d bytes", p.Written)
 	}
 }
+*/

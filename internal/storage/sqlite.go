@@ -178,3 +178,46 @@ func SetWorkerCount(db *sql.DB, count int) error {
 
 	return err
 }
+
+func SetStatus(db *sql.DB, id int64, status string) error {
+	result, err := db.Exec("UPDATE downloads SET status = ? WHERE id = ?", status, id)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return fmt.Errorf("download with id %d not found", id)
+	}
+	return nil
+}
+
+func RecoverDownloads(db *sql.DB) error {
+	_, err := db.Exec(`
+		UPDATE downloads
+		SET status = 'PAUSED'
+		WHERE status = 'DOWNLOADING'
+	`)
+	return err
+}
+
+func DeleteDownload(db *sql.DB, id int64) (string, error) {
+	var filename string
+
+	err := db.QueryRow(
+		"DELETE FROM downloads WHERE id = ? RETURNING filename",
+		id,
+	).Scan(&filename)
+
+	if err == sql.ErrNoRows {
+		return "", fmt.Errorf("download with id %d not found", id)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}

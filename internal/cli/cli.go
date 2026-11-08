@@ -53,6 +53,11 @@ func Run(args []string) error {
 		return err
 	}
 
+	err = storage.RecoverDownloads(db)
+	if err != nil {
+		return err
+	}
+
 	app := &App{
 		db:           db,
 		downloadsDir: downloadsDir,
@@ -142,6 +147,9 @@ func (a *App) execute(args []string) error {
 		}
 
 		return queue.Run(a.db, a.downloadsDir, count, status)
+
+	case "delete":
+		return a.delete(args)
 
 	case "clear":
 		if len(args) != 1 {
@@ -265,6 +273,38 @@ func (a *App) workers(args []string) error {
 	return nil
 }
 
+func (a *App) delete(args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("usage: delete <id>")
+	}
+
+	id, err := strconv.ParseInt(args[1], 10, 64)
+	if err != nil || id <= 0 {
+		return fmt.Errorf("invalid download ID: %s", args[1])
+	}
+
+	filename, err := storage.DeleteDownload(a.db, id)
+	if err != nil {
+		return err
+	}
+
+	filePath := filepath.Join(
+		a.downloadsDir,
+		fmt.Sprintf("%d_%s", id, filepath.Base(filename)),
+	)
+
+	err = os.Remove(filePath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf(
+			"download removed from database, but file deletion failed: %w",
+			err,
+		)
+	}
+
+	fmt.Printf("Download ID: %d deleted\n", id)
+	return nil
+}
+
 func (a *App) clear() error {
 	fmt.Print("Delete ALL downloads and database records? Type CLEAR: ")
 
@@ -312,6 +352,7 @@ func printHelp() {
 	fmt.Println("  resume                Resume paused downloads")
 	fmt.Println("  retry                 Retry failed downloads")
 	fmt.Println("  workers [count]       Show or change worker count (1-32)")
+	fmt.Println("  delete <id>           Delete a download and its file")
 	fmt.Println("  clear                 Clear downloads and database records")
 	fmt.Println("  help                  Show this help")
 	fmt.Println("  exit                  Exit interactive mode")
